@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creative Studio</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&family=Great+Vibes&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    color:white;
+    background:linear-gradient(270deg,#2a003f,#000,#1a002a);
+    background-size:400% 400%;
+    animation:bgMove 10s ease infinite;
+}
+@keyframes bgMove{
+    0%{background-position:0%}
+    50%{background-position:100%}
+    100%{background-position:0%}
+}
+
+/* NAVBAR */
+nav{
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%);
+    width:90%;
+    padding:15px 40px;
+    border-radius:50px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.08);
+    transition:all .4s ease;
+    z-index:1000;
+}
+nav.scrolled{
+    top:10px;
+    background:rgba(0,0,0,0.9);
+    box-shadow:0 10px 30px rgba(0,0,0,.6);
+}
+
+/* hide navbar when modal opens */
+nav.hidden{
+    opacity:0;
+    pointer-events:none;
+    transform:translateX(-50%) translateY(-20px);
+}
+
+nav h2{
+    font-family:'Great Vibes';
+    font-size:42px;
+}
+nav a{
+    color:white;
+    margin-left:25px;
+    text-decoration:none;
+    opacity:.8;
+    transition:.3s;
+}
+nav a:hover{opacity:1;}
+
+/* HERO */
+.hero{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+}
+
+.hero h1{
+    font-size:52px;
+    margin-bottom:10px;
+}
+
+.hero p{
+    font-size:18px;
+    opacity:.85;
+    max-width:500px;
+}
+
+/* BUTTON */
+.explore-btn{
+    margin-top:25px;
+    padding:15px 40px;
+    border-radius:50px;
+    border:none;
+    cursor:pointer;
+    background:linear-gradient(135deg,#6a00ff,#ff00d4);
+    color:white;
+    font-weight:bold;
+    letter-spacing:1px;
+    transition:all .4s ease;
+    position:relative;
+    overflow:hidden;
+    animation:pulse 2s infinite;
+}
+.explore-btn:hover{
+    transform:scale(1.1);
+    box-shadow:0 0 25px rgba(106,0,255,0.6);
+}
+.explore-btn::after{
+    content:'';
+    position:absolute;
+    width:100%;
+    height:100%;
+    top:0;
+    left:-100%;
+    background:rgba(255,255,255,0.2);
+    transform:skewX(-20deg);
+}
+.explore-btn:hover::after{
+    animation:shine .8s forwards;
+}
+@keyframes shine{
+    100%{left:120%;}
+}
+@keyframes pulse{
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.05)}
+}
+
+section{padding:120px 60px;}
+
+/* GRID */
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:25px;
+}
+
+.section-title{
+    margin-bottom:20px;
+    font-size:28px;
+    opacity:.9;
+}
+
+.card{
+    border-radius:15px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:.4s;
+    background:rgba(255,255,255,0.03);
+    position:relative;
+}
+
+.card img{
+    width:100%;
+    height:260px;
+    object-fit:cover;
+    display:block;
+    transition:.4s;
+}
+
+.card:hover img{
+    transform:scale(1.05);
+}
+
+.card:hover{
+    transform:translateY(-10px);
+}
+
+.price-tag{
+    position:absolute;
+    bottom:10px;
+    right:10px;
+    background:linear-gradient(135deg,#6a00ff,#a855f7);
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:13px;
+    font-weight:bold;
+    animation:floatPrice 2s infinite ease-in-out;
+}
+@keyframes floatPrice{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-5px)}
+}
+
+/* DELIVERY */
+.delivery-container{
+    display:flex;
+    gap:20px;
+}
+
+.delivery-card{
+    flex:1;
+    padding:30px;
+    border-radius:20px;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.1);
+    transition:.4s;
+    position:relative;
+    overflow:hidden;
+}
+.delivery-card:hover{
+    transform:translateY(-10px) scale(1.02);
+    background:rgba(255,255,255,0.08);
+}
+.delivery-card::before{
+    content:'📦';
+    position:absolute;
+    top:10px;
+    right:10px;
+    font-size:22px;
+    opacity:0.7;
+}
+
+.price{
+    color:#a855f7;
+    font-weight:bold;
+    margin-top:10px;
+}
+
+@media(max-width:768px){
+    .delivery-container{flex-direction:column;}
+}
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.95);
+    display:none;
+    justify-content:center;
+    align-items:center;
+}
+.modal.active{display:flex;}
+
+.modal img{
+    max-width:90%;
+    max-height:85vh;
+    object-fit:contain;
+    border-radius:10px;
+}
+
+.close{
+    position:absolute;
+    top:20px;
+    right:30px;
+    cursor:pointer;
+    font-size:30px;
+}
+</style>
+</head>
+
+<body>
+
+<nav id="nav">
+    <h2>Studio</h2>
+    <div>
+        <a href="#home">Home</a>
+        <a href="#gallery">Designs</a>
+        <a href="#delivery">Delivery</a>
+    </div>
+</nav>
+
+<section class="hero" id="home">
+    <h1>We Design Your Vision</h1>
+    <p>We believe every idea deserves to shine — we turn your imagination into beautiful reality with passion and precision.</p>
+    <button class="explore-btn" onclick="scrollToGallery()">Explore</button>
+</section>
+
+<section id="gallery">
+    <h2 class="section-title">Designs</h2>
+
+    <div class="grid">
+        <div class="card" onclick="openModal(this)">
+            <img src="E:\studio\desings\desing4.jpeg">
+            <div class="price-tag">From EGP25</div>
+        </div>
+
+        <div class="card" onclick="openModal(this)">
+            <img src="E:\studio\desings\desing3.jpeg">
+            <div class="price-tag">From EGP30</div>
+        </div>
+
+        <div class="card" onclick="openModal(this)">
+            <img src="E:\studio\desings\desing2.jpg">
+            <div class="price-tag">From EGP40</div>
+        </div>
+
+        <div class="card" onclick="openModal(this)">
+            <img src="E:\studio\desings\desing1.jpg">
+            <div class="price-tag">From EGP35</div>
+        </div>
+    </div>
+</section>
+
+<section id="delivery">
+    <h2 class="section-title">Delivery</h2>
+
+    <div class="delivery-container">
+        <div class="delivery-card">Cairo<div class="price">50 EGP</div></div>
+        <div class="delivery-card">Giza<div class="price">60 EGP</div></div>
+        <div class="delivery-card">Alex<div class="price">80 EGP</div></div>
+    </div>
+</section>
+
+<div class="modal" id="modal">
+    <span class="close" onclick="closeModal()">✖</span>
+    <img id="modalImg">
+</div>
+
+<script>
+function scrollToGallery(){
+    document.getElementById("gallery").scrollIntoView({behavior:"smooth"});
+}
+
+window.addEventListener("scroll",()=>{
+    const nav=document.getElementById("nav");
+    nav.classList.toggle("scrolled",window.scrollY>50);
+});
+
+function openModal(card){
+    document.getElementById("modalImg").src=card.querySelector("img").src;
+    document.getElementById("modal").classList.add("active");
+    document.getElementById("nav").classList.add("hidden");
+}
+
+function closeModal(){
+    document.getElementById("modal").classList.remove("active");
+    document.getElementById("nav").classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
