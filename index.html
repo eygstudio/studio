@@ -1879,10 +1879,10 @@ document.addEventListener('keydown', (e) => {
         closeOrderDetail();
         closeSuccess();
     }
-    // ===================== GOOGLE SHEETS CONFIG =====================
-const SHEETS_API_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec'; // غيرها
+ // ===================== SHEETDB CONFIG =====================
+const SHEETDB_URL = 'https://sheetdb.io/api/v1/b3l5g4rc56v28'; // غيرها
 
-// ===================== CHECKOUT (Google Sheets Version) =====================
+// ===================== CHECKOUT (SheetDB Version) =====================
 async function placeOrder() {
     const name = document.getElementById('coName').value.trim();
     const phone = document.getElementById('coPhone').value.trim();
@@ -1900,16 +1900,29 @@ async function placeOrder() {
     const deliveryFee = deliveryFees[govKey] || deliveryFees.default;
     const total = itemsTotal + deliveryFee;
 
+    // Format items as string
+    const itemsText = cart.map(item => 
+        `${item.title} (x${item.qty}) @ EGP${item.price}`
+    ).join(' | ');
+
+    const orderId = 'STU-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + 
+                    Math.floor(1000 + Math.random() * 9000);
+
     const orderData = {
-        customer: { name, phone, governorate: gov, address, notes },
-        items: cart.map(item => ({
-            title: item.title,
-            qty: item.qty,
-            price: item.price
-        })),
-        itemsTotal: itemsTotal,
-        deliveryFee: deliveryFee,
-        total: total
+        data: {
+            id: orderId,
+            date: new Date().toLocaleString('en-GB'),
+            customer: name,
+            phone: phone,
+            governorate: gov,
+            address: address,
+            notes: notes || '',
+            items: itemsText,
+            items_total: itemsTotal,
+            delivery: deliveryFee,
+            total: total,
+            status: 'Pending'
+        }
     };
 
     // Loading
@@ -1918,24 +1931,22 @@ async function placeOrder() {
     btn.disabled = true;
 
     try {
-        const response = await fetch(SHEETS_API_URL, {
+        const response = await fetch(SHEETDB_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData),
-            // Important for Google Apps Script
-            redirect: 'follow'
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(orderData)
         });
 
         const result = await response.json();
-        console.log('Sheets response:', result);
+        console.log('SheetDB response:', result);
 
-        if(result.success) {
+        if(result.created === 1 || response.ok) {
             // Save locally too
             const localOrder = {
-                id: result.orderId,
+                id: orderId,
                 date: new Date().toISOString(),
                 status: 'pending',
-                customer: orderData.customer,
+                customer: {name, phone, governorate: gov, address, notes},
                 items: cart.map(item => ({...item})),
                 itemsTotal, deliveryFee, total
             };
@@ -1955,49 +1966,22 @@ async function placeOrder() {
 
             document.getElementById('successModal').classList.add('active');
             renderOrders();
-            showToast('Order placed! #' + result.orderId);
+            showToast('Order placed! #' + orderId);
             
         } else {
-            throw new Error(result.message);
+            throw new Error('SheetDB error');
         }
 
     } catch(error) {
         console.error('Error:', error);
-        showToast('Saved locally - check sheet later');
-        saveOrderLocally(orderData, itemsTotal, deliveryFee, total);
+        showToast('Network error - saved locally');
+        saveOrderLocally({name, phone, governorate: gov, address, notes}, itemsTotal, deliveryFee, total);
         
     } finally {
         btn.textContent = 'Place Order';
         btn.disabled = false;
     }
 }
-
-// Fallback
-function saveOrderLocally(customer, itemsTotal, deliveryFee, total) {
-    const order = {
-        id: 'ORD-' + Date.now().toString(36).toUpperCase(),
-        date: new Date().toISOString(),
-        status: 'pending',
-        customer: customer,
-        items: cart.map(item => ({...item})),
-        itemsTotal, deliveryFee, total,
-        syncStatus: 'pending'
-    };
-    
-    orders.unshift(order);
-    localStorage.setItem('studio_orders', JSON.stringify(orders));
-    
-    cart = [];
-    saveCart();
-    updateCartUI();
-    closeCheckout();
-    
-    ['coName','coPhone','coGov','coAddress','coNotes'].forEach(id => {
-        document.getElementById(id).value = '';
-    });
-    
-    document.getElementById('successModal').classList.add('active');
-    renderOrders();
 }
 });
 </script>
