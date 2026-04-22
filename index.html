@@ -1648,8 +1648,11 @@ function closeCheckout(){
     document.getElementById('checkoutModal').classList.remove('active');
     document.getElementById('nav').classList.remove('hide-on-scroll');
 }
+// ===================== GOOGLE SHEETS CONFIG =====================
+const SHEETS_ACTION_URL = 'https://script.google.com/macros/s/AKfycbyALn-0VTh8RXLLxv4sdvDXbBBeJ4ByrRs2uxBR7KH6eM_88sx9ZooaW6e-W_oEnBGB/exec'; // غيرها
 
-function placeOrder(){
+// ===================== CHECKOUT (Form Submit Version) =====================
+function placeOrder() {
     const name = document.getElementById('coName').value.trim();
     const phone = document.getElementById('coPhone').value.trim();
     const gov = document.getElementById('coGov').value.trim();
@@ -1666,41 +1669,79 @@ function placeOrder(){
     const deliveryFee = deliveryFees[govKey] || deliveryFees.default;
     const total = itemsTotal + deliveryFee;
 
-    const order = {
-        id: 'ORD-' + Date.now().toString(36).toUpperCase(),
+    // Generate ID
+    const orderId = 'STU-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + 
+                    Math.floor(1000 + Math.random() * 9000);
+
+    // Format items
+    const itemsText = cart.map(item => 
+        `${item.title} (x${item.qty}) @ EGP${item.price}`
+    ).join(' | ');
+
+    // Create hidden form
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = SHEETS_ACTION_URL;
+    form.target = '_blank'; // Opens in new tab
+    form.style.display = 'none';
+
+    // Helper to add fields
+    function addField(name, value) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+    }
+
+    // Add all fields
+    addField('id', orderId);
+    addField('date', new Date().toLocaleString('en-GB'));
+    addField('customer', name);
+    addField('phone', phone);
+    addField('governorate', gov);
+    addField('address', address);
+    addField('notes', notes || '');
+    addField('items', itemsText);
+    addField('items_total', itemsTotal);
+    addField('delivery', deliveryFee);
+    addField('total', total);
+    addField('status', 'Pending');
+
+    document.body.appendChild(form);
+    
+    // Save locally before submit
+    const localOrder = {
+        id: orderId,
         date: new Date().toISOString(),
         status: 'pending',
         customer: {name, phone, governorate: gov, address, notes},
         items: cart.map(item => ({...item})),
-        itemsTotal,
-        deliveryFee,
-        total
+        itemsTotal, deliveryFee, total
     };
-
-    orders.unshift(order);
+    orders.unshift(localOrder);
     localStorage.setItem('studio_orders', JSON.stringify(orders));
 
+    // Clear cart
     cart = [];
     saveCart();
     updateCartUI();
     closeCheckout();
-
+    
     // Clear form
-    document.getElementById('coName').value = '';
-    document.getElementById('coPhone').value = '';
-    document.getElementById('coGov').value = '';
-    document.getElementById('coAddress').value = '';
-    document.getElementById('coNotes').value = '';
+    ['coName','coPhone','coGov','coAddress','coNotes'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
 
+    // Submit to Google
+    form.submit();
+    document.body.removeChild(form);
+
+    // Show success locally too
     document.getElementById('successModal').classList.add('active');
     renderOrders();
+    showToast('Order placed! #' + orderId);
 }
-
-function closeSuccess(){
-    document.getElementById('successModal').classList.remove('active');
-    document.getElementById('orders').scrollIntoView({behavior:'smooth'});
-}
-
 /* ===================== ORDERS ===================== */
 function renderOrders(){
     const container = document.getElementById('ordersList');
